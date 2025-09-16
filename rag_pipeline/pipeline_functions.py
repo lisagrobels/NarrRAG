@@ -383,4 +383,165 @@ def refine_narrative(state: GraphState) -> GraphState:
         "pending_narratives_with_docs": {topic_id: narrative_with_docs}
     })
 
-    
+def build_graph():
+    builder = StateGraph(GraphState)
+
+    builder.add_node("retrieve", retrieve_node)
+    builder.add_node("extract", extract_narrative)
+    builder.add_node("refine", refine_narrative)
+    builder.add_node("grade", grade_narrative)
+
+    builder.set_entry_point("retrieve")
+
+    # Linear flow
+    builder.add_edge("retrieve", "extract")
+    builder.add_edge("extract", "grade")
+    builder.add_edge("refine", "grade")
+
+    # Conditional routing after grading
+    def route_after_grading(state: GraphState):
+        grade_result = state.grade_result
+        topic_key = str(state.topic_id)
+        pending = state.pending_narratives_with_docs
+
+        # If narrative is approved, or no longer pending (force-approved or otherwise), we're done
+        if (grade_result and grade_result.grade == Grade.approved) or \
+           (not pending or topic_key not in pending):
+            print(f"🎉 Narrative approved or force-approved for topic {state.topic_id}.")
+            return END
+
+        # Otherwise, keep refining
+        print(f"🔁 Refining narrative for topic {state.topic_id}...")
+        return "refine"
+
+    builder.add_conditional_edges("grade", route_after_grading, {
+        "refine": "refine",
+        END: END
+    })
+
+    return builder.compile()
+
+
+def safe_model_dump(obj, _seen=None):
+    if _seen is None:
+        _seen = set()
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return None  # safer than injecting invalid strings
+    _seen.add(obj_id)
+
+    if isinstance(obj, BaseModel):
+        return safe_model_dump(obj.model_dump(mode="python", by_alias=False), _seen)
+    elif isinstance(obj, dict):
+        return {k: safe_model_dump(v, _seen) for k, v in obj.items() if v is not None}
+    elif isinstance(obj, list):
+        return [safe_model_dump(i, _seen) for i in obj if i is not None]
+    else:
+        return obj
+
+
+def convert_numpy_types(obj, _seen=None):
+    if _seen is None:
+        _seen = set()
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return None
+    _seen.add(obj_id)
+
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v, _seen) for k, v in obj.items() if v is not None}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(i, _seen) for i in obj if i is not None]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.generic):
+        return obj.item()
+    else:
+        return obj
+
+
+def get_page_content(doc):
+    if hasattr(doc, "page_content"):
+        return doc.page_content
+    elif isinstance(doc, dict) and "page_content" in doc:
+        return doc["page_content"]
+    elif hasattr(doc, "get") and callable(doc.get):
+        return doc.get("page_content", str(doc))
+    else:
+        return str(doc)
+
+def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
+    from langgraph.graph import END
+    topic_keywords = {str(k): v for k, v in topic_keywords.items()}
+    output_dir.mkdir(exist_ok=True)
+    graph = build_graph()
+    all_approved_narratives = []
+    topic_results = {}
+
+    for topic_id, keywords in topic_keywords.items():
+        try:
+            print(f"\n🚀 Processing topic {topic_id}...")
+
+            initial_state = GraphState(
+                topic_id=topic_id,
+                query=" ".join(keywords),
+                pending_narratives_with_docs={},  # important for grading step
+            )
+
+            final_state = graph.invoke(initial_state, {"recursion_limit": 500})
+
+            # Ensure final_state is a valid GraphState instance
+            if not isinstance(final_state, GraphState):
+                if isinstance(final_state, BaseModel):
+                    raw_state = final_state.model_dump(mode="python", by_alias=False)
+                elif isinstance(final_state, dict):
+                    raw_state = final_state
+                else:
+                    raise TypeError(f"Unexpected type for final_state: {type(final_state)}")
+
+                final_state = TypeAdapter(GraphState).validate_python(raw_state)
+
+
+            # Step 3: Extract narratives
+            approved_narratives = final_state.approved_narratives or []
+
+            # Step 4: JSON-safe output (detect circular refs only at this stage)
+            try:
+                result_dict = safe_model_dump(final_state)        # Handles nested BaseModels
+                result_dict = convert_numpy_types(result_dict)    # Handles NumPy types
+                with open(output_dir / f"topic_{topic_id}.json", "w") as f:
+                    json.dump(result_dict, f, indent=2)
+            except Exception as serialization_error:
+                print(f"⚠️ Failed to serialize topic {topic_id}: {serialization_error}")
+                traceback.print_exc()
+
+
+
+            topic_results[topic_id] = {
+                "approved_narratives": approved_narratives,
+                "final_state": final_state
+            }
+            all_approved_narratives.extend(approved_narratives)
+            print(f"✅ Topic {topic_id} done. {len(approved_narratives)} narrative(s) approved.")
+
+        except Exception as e:
+            print(f"❌ Error processing topic {topic_id}: {e}")
+            traceback.print_exc()
+
+    # Save all approved narratives globally
+    approved_path = output_dir / "approved_narratives_global.json"
+    with open(approved_path, "w") as f:
+        json.dump(convert_numpy_types([
+            safe_model_dump(n) for n in all_approved_narratives
+        ]), f, indent=2)
+    print(f"📋 Saved {len(all_approved_narratives)} total approved narratives.")
+
+    return all_approved_narratives, topic_results
+
+
+approved, results = run_narrative_extraction(topic_keywords, output_dir)
+
