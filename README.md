@@ -1,1 +1,13 @@
 # narrRAG
+
+NarrRAG is a modular narrative labeling framework that generates semantically precise and human-interpretable topic labels while minimizing human effort. NarrRAG uses standard topic model outputs to generate, validate, and refine narratives that serve as topic labels. The orchestrated RAG framework uses multiple retrieval strategies and chain-of-thought elements to provide high-quality output.
+
+This repository serves as a demo implementation of NarrRAG using LangChain, LangGraph, Ollama (llama3.2) and Pydantic. We use a subsample (1,000 posts) of this X dataset on the U.S. election in 2024 (https://github.com/sinking8/x-24-us-election, see https://arxiv.org/abs/2411.00376 for the corresponding publication) to showcase basic functionality.
+
+Three input documents are needed for NarrRAG:
+
+1. one csv file with the text of each post ('Document') and the assigned topic ('Topic'),
+2. one json file with representative topic keywords, and
+3. one json file with news data
+
+To obtain news data for our demo, we used the GNews package for Python (https://github.com/ranahaani/GNews).
