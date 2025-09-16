@@ -30,3 +30,55 @@ def load_json_documents(file_path: Path, content_key: str = "description") -> Li
     )
     docs = loader.load()
     return docs
+
+def safe_model_dump(obj, _seen=None):
+    if _seen is None:
+        _seen = set()
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return None  # safer than injecting invalid strings
+    _seen.add(obj_id)
+
+    if isinstance(obj, BaseModel):
+        return safe_model_dump(obj.model_dump(mode="python", by_alias=False), _seen)
+    elif isinstance(obj, dict):
+        return {k: safe_model_dump(v, _seen) for k, v in obj.items() if v is not None}
+    elif isinstance(obj, list):
+        return [safe_model_dump(i, _seen) for i in obj if i is not None]
+    else:
+        return obj
+
+
+def convert_numpy_types(obj, _seen=None):
+    if _seen is None:
+        _seen = set()
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return None
+    _seen.add(obj_id)
+
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v, _seen) for k, v in obj.items() if v is not None}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(i, _seen) for i in obj if i is not None]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.generic):
+        return obj.item()
+    else:
+        return obj
+
+
+def get_page_content(doc):
+    if hasattr(doc, "page_content"):
+        return doc.page_content
+    elif isinstance(doc, dict) and "page_content" in doc:
+        return doc["page_content"]
+    elif hasattr(doc, "get") and callable(doc.get):
+        return doc.get("page_content", str(doc))
+    else:
+        return str(doc)
