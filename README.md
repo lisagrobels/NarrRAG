@@ -11,3 +11,11 @@ Three input documents are needed for NarrRAG:
 3. one json file with news data
 
 To obtain news data for our demo, we used the GNews package for Python (https://github.com/ranahaani/GNews).
+
+For replication, we provide four files:
+1. testdata_cleaned.csv, which is the input file for the BERTopic (https://github.com/MaartenGr/BERTopic/tree/master, https://arxiv.org/abs/2203.05794) model we need to run before NarrRAG can be applied (we tuned hyperparameter with OPTUNA, https://github.com/optuna/optuna),
+2. testdata_seedtopics.csv, which equals the output of BERTopic modeling and includes the two columns necessary for NarrRAG 'Document' and 'Topic,
+3. testdata_topic_keywords.json, which includes representative keywords for each topic, and
+4. testdata_news.json, which consists of news content used for validation and obtained via GNews package.
+
+
