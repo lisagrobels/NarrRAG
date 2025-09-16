@@ -1,4 +1,4 @@
-# narrRAG
+# NarrRAG
 
 NarrRAG is a modular narrative labeling framework that generates semantically precise and human-interpretable topic labels while minimizing human effort. NarrRAG uses standard topic model outputs to generate, validate, and refine narratives that serve as topic labels. The orchestrated RAG framework uses multiple retrieval strategies and chain-of-thought elements to provide high-quality output.
 
