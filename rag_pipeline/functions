@@ -382,3 +382,70 @@ def refine_narrative(state: GraphState) -> GraphState:
         "pending_narratives_with_docs": {topic_id: narrative_with_docs}
     })
 
+def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
+    from langgraph.graph import END
+    topic_keywords = {str(k): v for k, v in topic_keywords.items()}
+    output_dir.mkdir(exist_ok=True)
+    graph = build_graph()
+    all_approved_narratives = []
+    topic_results = {}
+
+    for topic_id, keywords in topic_keywords.items():
+        try:
+            print(f"\n🚀 Processing topic {topic_id}...")
+
+            initial_state = GraphState(
+                topic_id=topic_id,
+                query=" ".join(keywords),
+                pending_narratives_with_docs={},  # important for grading step
+            )
+
+            final_state = graph.invoke(initial_state, {"recursion_limit": 500})
+
+            # Ensure final_state is a valid GraphState instance
+            if not isinstance(final_state, GraphState):
+                if isinstance(final_state, BaseModel):
+                    raw_state = final_state.model_dump(mode="python", by_alias=False)
+                elif isinstance(final_state, dict):
+                    raw_state = final_state
+                else:
+                    raise TypeError(f"Unexpected type for final_state: {type(final_state)}")
+
+                final_state = TypeAdapter(GraphState).validate_python(raw_state)
+
+
+            # Step 3: Extract narratives
+            approved_narratives = final_state.approved_narratives or []
+
+            # Step 4: JSON-safe output (detect circular refs only at this stage)
+            try:
+                result_dict = safe_model_dump(final_state)        # Handles nested BaseModels
+                result_dict = convert_numpy_types(result_dict)    # Handles NumPy types
+                with open(output_dir / f"topic_{topic_id}.json", "w") as f:
+                    json.dump(result_dict, f, indent=2)
+            except Exception as serialization_error:
+                print(f"⚠️ Failed to serialize topic {topic_id}: {serialization_error}")
+                traceback.print_exc()
+
+
+
+            topic_results[topic_id] = {
+                "approved_narratives": approved_narratives,
+                "final_state": final_state
+            }
+            all_approved_narratives.extend(approved_narratives)
+            print(f"✅ Topic {topic_id} done. {len(approved_narratives)} narrative(s) approved.")
+
+        except Exception as e:
+            print(f"❌ Error processing topic {topic_id}: {e}")
+            traceback.print_exc()
+
+    # Save all approved narratives globally
+    approved_path = output_dir / "approved_narratives_global.json"
+    with open(approved_path, "w") as f:
+        json.dump(convert_numpy_types([
+            safe_model_dump(n) for n in all_approved_narratives
+        ]), f, indent=2)
+    print(f"📋 Saved {len(all_approved_narratives)} total approved narratives.")
+
+    return all_approved_narratives, topic_results
