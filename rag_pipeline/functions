@@ -382,6 +382,45 @@ def refine_narrative(state: GraphState) -> GraphState:
         "pending_narratives_with_docs": {topic_id: narrative_with_docs}
     })
 
+def build_graph():
+    builder = StateGraph(GraphState)
+
+    builder.add_node("retrieve", retrieve_node)
+    builder.add_node("extract", extract_narrative)
+    builder.add_node("refine", refine_narrative)
+    builder.add_node("grade", grade_narrative)
+
+    builder.set_entry_point("retrieve")
+
+    # Linear flow
+    builder.add_edge("retrieve", "extract")
+    builder.add_edge("extract", "grade")
+    builder.add_edge("refine", "grade")
+
+    # Conditional routing after grading
+    def route_after_grading(state: GraphState):
+        grade_result = state.grade_result
+        topic_key = str(state.topic_id)
+        pending = state.pending_narratives_with_docs
+
+        # If narrative is approved, or no longer pending (force-approved or otherwise), we're done
+        if (grade_result and grade_result.grade == Grade.approved) or \
+           (not pending or topic_key not in pending):
+            print(f"🎉 Narrative approved or force-approved for topic {state.topic_id}.")
+            return END
+
+        # Otherwise, keep refining
+        print(f"🔁 Refining narrative for topic {state.topic_id}...")
+        return "refine"
+
+    builder.add_conditional_edges("grade", route_after_grading, {
+        "refine": "refine",
+        END: END
+    })
+
+    return builder.compile()
+
+
 def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
     from langgraph.graph import END
     topic_keywords = {str(k): v for k, v in topic_keywords.items()}
