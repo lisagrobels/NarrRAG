@@ -19,4 +19,7 @@ For replication, we provide four files:
 4. testdata_news.json, which consists of news content used for validation and obtained via GNews package.
 
 The figure below presents the LangGraph visualization of NarrRAG's narrative extraction and validation pipeline:
-![Graph visualization](/graph.png)
+<p align="center">
+  <img src="/graph.png" width="600" alt="RAG Graph Visualization">
+</p>
+
