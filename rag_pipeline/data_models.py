@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
+from pydantic import TypeAdapter
 
 # Setup pydantic models and graph state models
 class Narrative(BaseModel):
