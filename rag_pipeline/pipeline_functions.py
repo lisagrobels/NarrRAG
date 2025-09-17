@@ -67,10 +67,11 @@ class GraphState(BaseModel):
     grade_result: Optional[GradedNarrative] = None
     approved_narratives: Optional[List[ApprovedNarrativeWithDocs]] = Field(default_factory=list)
     pending_narratives_with_docs: Dict[str, ApprovedNarrativeWithDocs] = Field(default_factory=dict)
+    bm25_retrievers: Dict[str, Any] = Field(default_factory=dict)
+    chroma_retriever: Any = None
     refine_counts: Dict[str, int] = Field(default_factory=dict)
     topic_keywords: Dict[str, list[str]] = Field(default_factory=dict)
-    bm25_retrievers: Dict[str, Any] = Field(default_factory=dict)  
-    chroma_retriever: Any = None  
+    
 
 # Setup LLMs
 llm = ChatOllama(model="llama3.2")
