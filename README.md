@@ -20,6 +20,8 @@ For replication, we provide four files:
 
 The figure below presents the LangGraph visualization of NarrRAG's narrative extraction and validation pipeline:
 <p align="center">
-  <img src="/graph.png" width="600" alt="RAG Graph Visualization">
+  <img src="/graph.png" width="200" alt="RAG Graph Visualization">
 </p>
+
+To learn more about NarrRAG and its functionality consult the corresponding publication: LINK WILL BE ADDED
 
