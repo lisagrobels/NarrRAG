@@ -564,6 +564,8 @@ def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
     graph = build_graph()
     all_approved_narratives = []
     topic_results = {}
+    bm25_retrievers: dict,
+    chroma_retriever
 
     for topic_id, keywords in topic_keywords.items():
         try:
