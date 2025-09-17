@@ -621,6 +621,3 @@ def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
 
     return all_approved_narratives, topic_results
 
-
-approved, results = run_narrative_extraction(topic_keywords, output_dir)
-
