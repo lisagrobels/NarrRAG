@@ -69,6 +69,8 @@ class GraphState(BaseModel):
     pending_narratives_with_docs: Dict[str, ApprovedNarrativeWithDocs] = Field(default_factory=dict)
     refine_counts: Dict[str, int] = Field(default_factory=dict)
     topic_keywords: Dict[str, list[str]] = Field(default_factory=dict)
+    bm25_retrievers: Dict[str, Any] = Field(default_factory=dict)  
+    chroma_retriever: Any = None  
 
 # Setup LLMs
 llm = ChatOllama(model="llama3.2")
@@ -84,8 +86,8 @@ def retrieve_node(state: GraphState) -> GraphState:
     keywords = state.topic_keywords[state.topic_id]
     query = " ".join(keywords)    
 
-    docs_bm25 = bm25_retrievers[topic_id].invoke(query)
-    docs_chroma = chroma_retriever.invoke(query)
+    docs_bm25 = state.bm25_retrievers[topic_id].invoke(query)
+    docs_chroma = state.chroma_retriever.invoke(query)
 
     return GraphState(
         topic_id=topic_id,
@@ -570,7 +572,9 @@ def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
                 topic_id=topic_id,
                 query=" ".join(keywords),
                 pending_narratives_with_docs={},
-                topic_keywords={str(topic_id): keywords}
+                topic_keywords={str(topic_id): keywords},
+                bm25_retrievers=bm25_retrievers,
+                chroma_retriever=chroma_retriever
             )
 
             final_state = graph.invoke(initial_state, {"recursion_limit": 500})
