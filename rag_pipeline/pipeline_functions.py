@@ -509,21 +509,43 @@ def build_graph():
 
 
 def safe_model_dump(obj, _seen=None):
+    """
+    Recursively serialize a Pydantic model or nested structures,
+    skipping non-serializable objects (like retrievers).
+    """
     if _seen is None:
         _seen = set()
     obj_id = id(obj)
     if obj_id in _seen:
-        return None  # safer than injecting invalid strings
+        return None  # prevent circular references
     _seen.add(obj_id)
 
+    # Handle Pydantic BaseModel
     if isinstance(obj, BaseModel):
         return safe_model_dump(obj.model_dump(mode="python", by_alias=False), _seen)
+
+    # Handle dicts
     elif isinstance(obj, dict):
-        return {k: safe_model_dump(v, _seen) for k, v in obj.items() if v is not None}
+        result = {}
+        for k, v in obj.items():
+            dumped = safe_model_dump(v, _seen)
+            # Only include serializable items
+            if dumped is not None and isinstance(dumped, (dict, list, str, int, float, bool)):
+                result[k] = dumped
+        return result
+
+    # Handle lists
     elif isinstance(obj, list):
         return [safe_model_dump(i, _seen) for i in obj if i is not None]
-    else:
+
+    # Handle basic types
+    elif isinstance(obj, (str, int, float, bool)) or obj is None:
         return obj
+
+    # For anything else (like Chroma retriever), skip it
+    else:
+        return None
+
 
 
 def convert_numpy_types(obj, _seen=None):
