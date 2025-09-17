@@ -68,6 +68,7 @@ class GraphState(BaseModel):
     approved_narratives: Optional[List[ApprovedNarrativeWithDocs]] = Field(default_factory=list)
     pending_narratives_with_docs: Dict[str, ApprovedNarrativeWithDocs] = Field(default_factory=dict)
     refine_counts: Dict[str, int] = Field(default_factory=dict)
+    topic_keywords={str(topic_id): keywords}
 
 # Setup LLMs
 llm = ChatOllama(model="llama3.2")
@@ -80,8 +81,9 @@ llm_grader = ChatOllama(model='llama3.2').with_structured_output(GradedNarrative
 # RETRIEVE
 def retrieve_node(state: GraphState) -> GraphState:
     topic_id = state.topic_id
-    keywords = topic_keywords[str(topic_id)]
+    #keywords = topic_keywords[str(topic_id)]
     query = " ".join(keywords)
+    keywords = state.topic_keywords[state.topic_id]
 
     docs_bm25 = bm25_retrievers[topic_id].invoke(query)
     docs_chroma = chroma_retriever.invoke(query)
