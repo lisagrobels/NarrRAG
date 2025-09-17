@@ -87,6 +87,9 @@ def retrieve_node(state: GraphState) -> GraphState:
     keywords = state.topic_keywords[state.topic_id]
     query = " ".join(keywords)    
 
+    if state.bm25_retrievers is None or state.chroma_retriever is None:
+        raise ValueError("bm25_retrievers and chroma_retriever must be provided")
+        
     docs_bm25 = state.bm25_retrievers[topic_id].invoke(query)
     docs_chroma = state.chroma_retriever.invoke(query)
 
@@ -557,15 +560,16 @@ def get_page_content(doc):
     else:
         return str(doc)
 
-def run_narrative_extraction(topic_keywords: dict, output_dir: Path):
+def run_narrative_extraction(topic_keywords: dict, output_dir: Path, bm25_retrievers: dict, chroma_retriever):
     from langgraph.graph import END
+    
     topic_keywords = {str(k): v for k, v in topic_keywords.items()}
     output_dir.mkdir(exist_ok=True)
+    
     graph = build_graph()
     all_approved_narratives = []
     topic_results = {}
-    bm25_retrievers = None
-    chroma_retriever = None
+    
 
     for topic_id, keywords in topic_keywords.items():
         try:
