@@ -1,4 +1,6 @@
-# in pipeline_functions now
+from typing import List
+from pydantic import BaseModel, Field
+
 # Setup pydantic models and graph state models
 class Narrative(BaseModel):
     topic_id: str = Field(description="The topic ID of the narrative.")
