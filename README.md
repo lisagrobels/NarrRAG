@@ -1,4 +1,4 @@
-# NTLRAG - Narrative Topic Labels extracted with Retrieval Augmented Generation
+# NTLRAG - Narrative Topic Labels derived with Retrieval Augmented Generation
 
 NTLRAG is a modular narrative labeling framework that generates semantically precise and human-interpretable topic labels while minimizing human effort. NTLRAG uses standard topic model outputs to generate, validate, and refine narratives that serve as topic labels. The orchestrated RAG framework uses multiple retrieval strategies and chain-of-thought elements to provide high-quality output. It extracts narratives from document clusters using the following structure:
 
