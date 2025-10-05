@@ -233,7 +233,7 @@ def extract_narrative(state: GraphState, max_attempts: int = 3) -> GraphState:
     return state
 
     
-# GRADE 
+# GRADE (= VALIDATE)
 MAX_REFINES = 100
 
 def auto_grade_if_incomplete(narrative: Narrative) -> Optional[GradedNarrative]:
