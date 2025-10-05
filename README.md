@@ -19,9 +19,9 @@ Three input documents are needed for NTLRAG:
 To obtain news data for our demo, we used the GNews package for Python (https://github.com/ranahaani/GNews).
 
 For replication, we provide four files:
-1. testdata_cleaned.csv, which is the input file for the BERTopic (https://github.com/MaartenGr/BERTopic/tree/master, https://arxiv.org/abs/2203.05794) model we need to run before NTLRAG can be applied (we tuned hyperparameter with OPTUNA, https://github.com/optuna/optuna),
-2. testdata_seedtopics.csv, which equals the output of BERTopic modeling and includes the two columns necessary for NTLRAG 'Document' and 'Topic,
-3. testdata_topic_keywords.json, which includes representative keywords for each topic, and
+1. testdata_cleaned.csv, which is the input file for the BERTopic (https://github.com/MaartenGr/BERTopic/tree/master, https://arxiv.org/abs/2203.05794) model we need to run before NTLRAG can be applied (we tuned hyperparameter with OPTUNA, https://github.com/optuna/optuna) and is based on the U.S. election dataset (https://github.com/sinking8/x-24-us-election, see https://arxiv.org/abs/2411.00376 for the corresponding publication),
+2. testdata_seedtopics.csv, which equals the output of BERTopic modeling and includes the two columns necessary for NTLRAG 'Document' and 'Topic',
+3. testdata_topic_keywords.json, which includes representative keywords for each topic (as provided by BERTopic), and
 4. testdata_news.json, which consists of news content used for validation and obtained via GNews package.
 
 The figure below presents the LangGraph visualization of NTLRAG's narrative extraction and validation pipeline:
