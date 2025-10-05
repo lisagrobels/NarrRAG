@@ -24,7 +24,7 @@ For replication, we provide four files:
 3. testdata_topic_keywords.json, which includes representative keywords for each topic (as provided by BERTopic), and
 4. testdata_news.json, which consists of news content used for validation and obtained via GNews package.
 
-The figure below presents the LangGraph visualization of NTLRAG's narrative extraction and validation pipeline:
+The figure below presents the LangGraph visualization of NTLRAG's narrative extraction and validation pipeline (grade equals the validation step):
 <p align="center">
   <img src="/graph.png" width="200" alt="RAG Graph Visualization">
 </p>
