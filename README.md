@@ -20,6 +20,8 @@ To obtain news data for our demo, we used the GNews package for Python (https://
 
 The Jupyter Notebook file NTLRAG_demo.ipynb in this repository provides a full implementation of NTLRAG with the sample dataset and is already linked to the necessary input files listed below. If needed, the technical components (retrievers, LLMs, datasets, etc.) can easily be adjusted. If the standard configurations (see publication for details) are to be used, the code can be run without any alternations.
 
+NOTE: The setup is configured for usage in google colab, please adjust if you run it on your local machine.
+
 For replication, we provide four files:
 1. testdata_cleaned.csv, which is the input file for the BERTopic (https://github.com/MaartenGr/BERTopic/tree/master, https://arxiv.org/abs/2203.05794) model we need to run before NTLRAG can be applied (we tuned hyperparameter with OPTUNA, https://github.com/optuna/optuna) and is based on the U.S. election dataset (https://github.com/sinking8/x-24-us-election, see https://arxiv.org/abs/2411.00376 for the corresponding publication),
 2. testdata_seedtopics.csv, which equals the output of BERTopic modeling and includes the two columns necessary for NTLRAG 'Document' and 'Topic',
